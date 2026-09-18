@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misión: Investigación</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#17132b,#30205b);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.game{width:min(760px,100%);background:#211b3a;border:1px solid #514878;border-radius:24px;padding:28px;box-shadow:0 20px 60px #0006}
+h1{margin:5px 0 10px;font-size:clamp(28px,6vw,46px)}h2{margin:10px 0;font-size:25px}.sub{color:#c9c3df;line-height:1.6}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.stat{background:#30294d;border-radius:12px;padding:10px 14px}.progress{height:9px;background:#393250;border-radius:9px;overflow:hidden;margin:18px 0}.bar{height:100%;width:0;background:#a78bfa;transition:.3s}.option{width:100%;text-align:left;border:1px solid #514878;background:#30294d;color:#fff;border-radius:13px;padding:14px;margin:8px 0;font-size:16px;cursor:pointer}.option:hover{border-color:#a78bfa}.option:disabled{cursor:default}.correct{border-color:#55d68b!important;background:#194b35!important}.wrong{border-color:#ff7777!important;background:#552b35!important}.btn{border:0;background:#a78bfa;color:#17132b;font-weight:bold;border-radius:13px;padding:13px 18px;cursor:pointer;font-size:16px;margin-top:15px}.hidden{display:none}.feedback{padding:14px;border-radius:12px;margin-top:15px;background:#30294d;line-height:1.5}.center{text-align:center}.small{font-size:14px;color:#aaa2c5}.badge{display:inline-block;background:#3b315e;padding:7px 11px;border-radius:999px;font-size:13px}
+</style>
+</head>
+<body>
+<main class="game">
+<section id="start">
+<span class="badge">🎓 Escape room universitario</span>
+<h1>🔐 Misión: Investigación</h1>
+<p class="sub">Tu equipo debe desbloquear una investigación. Supera 5 niveles sobre <b>planteamiento del problema</b> y <b>análisis bibliométrico cualitativo y cuantitativo</b>.</p>
+<div class="stats"><div class="stat">❤️ 3 vidas</div><div class="stat">⭐ 100 puntos posibles</div><div class="stat">🔑 5 niveles</div></div>
+<button class="btn" id="begin">Comenzar misión →</button>
+</section>
+
+<section id="play" class="hidden">
+<div style="display:flex;justify-content:space-between;gap:10px"><span id="level"></span><span>❤️ <b id="lives">3</b> · ⭐ <b id="score">0</b></span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<h2 id="question"></h2>
+<div id="options"></div>
+<div id="feedback" class="feedback hidden"></div>
+<button class="btn" id="next" disabled>Siguiente →</button>
+</section>
+
+<section id="end" class="hidden center">
+<div style="font-size:55px" id="emoji">🏆</div>
+<h1 id="endTitle"></h1>
+<p class="sub" id="endText"></p>
+<button class="btn" id="again">Jugar nuevamente</button>
+</section>
+</main>
+
+<script>
+const levels=[
+{q:"Una universidad detecta un aumento en el abandono de asignaturas virtuales. Hay estudios sobre motivación, interacción docente y plataformas digitales, pero no está claro cómo se relacionan estos factores con el abandono en este contexto. ¿Qué constituye principalmente el problema de investigación?",
+o:["Que existen plataformas digitales.","La falta de conocimiento sobre la relación entre esos factores y el abandono en ese contexto.","Que hay muchos artículos científicos.","Que los estudiantes utilizan tecnología."],a:1,e:"El problema se relaciona con una situación que requiere explicación y con un vacío de conocimiento investigable."},
+{q:"La producción científica sobre un tema fue: 2021: 8 artículos; 2022: 12; 2023: 19; 2024: 25; 2025: 31. ¿Qué análisis corresponde principalmente?",
+o:["Análisis cualitativo.","Análisis cuantitativo de la producción científica.","Análisis discursivo.","Análisis experimental."],a:1,e:"Contar publicaciones y observar su evolución temporal corresponde al análisis cuantitativo bibliométrico."},
+{q:"En los artículos aparecen repetidamente: motivación, participación, interacción docente, abandono, permanencia y rendimiento. ¿Qué procedimiento corresponde al análisis cualitativo?",
+o:["Contar únicamente cuántas palabras aparecen.","Agrupar conceptos en categorías y analizar las relaciones temáticas.","Eliminar los artículos con pocas citas.","Sumar el número de autores."],a:1,e:"El análisis cualitativo permite interpretar temas, conceptos, categorías y relaciones presentes en la literatura."},
+{q:"Los estudios revisados analizan por separado motivación, plataformas e interacción docente. Son pocos los trabajos que estudian conjuntamente estos factores en estudiantes universitarios de un contexto específico. ¿Qué se ha identificado?",
+o:["Una referencia bibliográfica.","Un vacío o necesidad de investigación.","Un indicador de citación.","Una variable estadística definitiva."],a:1,e:"Un vacío de investigación señala un aspecto insuficientemente estudiado que puede justificar una nueva investigación."},
+{q:"¿Cuál formulación integra mejor problema, pregunta y objetivo?",
+o:["Tema: educación virtual. Pregunta: ¿qué es la tecnología? Objetivo: hablar de tecnología.","Problema: existe abandono y falta claridad sobre factores relacionados. Pregunta: ¿cómo se relacionan motivación, participación e interacción docente con el abandono? Objetivo: analizar esa relación en el contexto definido.","Problema: hay muchos artículos. Pregunta: ¿cuántos artículos existen? Objetivo: contar artículos únicamente.","Problema: los estudiantes no estudian. Pregunta: ¿por qué? Objetivo: solucionar todo el abandono."],a:1,e:"Una formulación sólida conecta el problema con el vacío encontrado y delimita una pregunta y un objetivo coherentes."}
+];
+
+let i=0,score=0,lives=3,answered=false;
+const $=id=>document.getElementById(id);
+function showLevel(){
+ answered=false;$("level").textContent=`Nivel ${i+1} de ${levels.length}`;
+ $("bar").style.width=((i)/levels.length*100)+"%";$("question").textContent=levels[i].q;
+ $("options").innerHTML="";$("feedback").className="feedback hidden";$("next").disabled=true;
+ levels[i].o.forEach((text,n)=>{const b=document.createElement("button");b.className="option";b.textContent=text;b.type="button";b.onclick=()=>answer(n,b);$("options").appendChild(b)});
+}
+function answer(n,b){
+ if(answered)return;answered=true;
+ document.querySelectorAll(".option").forEach((x,k)=>{x.disabled=true;if(k===levels[i].a)x.classList.add("correct")});
+ if(n===levels[i].a){score+=20;b.classList.add("correct");$("feedback").textContent="✅ ¡Correcto! +20 puntos. "+levels[i].e}
+ else{lives--;b.classList.add("wrong");$("feedback").textContent="❌ Incorrecto. "+levels[i].e}
+ $("score").textContent=score;$("lives").textContent=lives;$("feedback").className="feedback";$("next").disabled=false;
+}
+function finish(){
+ $("play").classList.add("hidden");$("end").classList.remove("hidden");
+ if(lives>0){$("emoji").textContent="🏆";$("endTitle").textContent="¡Investigación desbloqueada!";$("endText").textContent=`Completaste la misión con ${score} puntos y ${lives} vidas. ¡Excelente trabajo!`}
+ else{$("emoji").textContent="🔎";$("endTitle").textContent="Misión no completada";$("endText").textContent="Te quedaste sin vidas. ¡Inténtalo otra vez!"}
+}
+$("begin").onclick=()=>{$("start").classList.add("hidden");$("play").classList.remove("hidden");showLevel()};
+$("next").onclick=()=>{if(lives<=0||i===levels.length-1)finish();else{i++;showLevel()}};
+$("again").onclick=()=>{i=0;score=0;lives=3;$("score").textContent=0;$("lives").textContent=3;$("end").classList.add("hidden");$("play").classList.remove("hidden");showLevel()};
+</script>
+</body>
+</html>
